@@ -6,9 +6,15 @@ class ZarrFile():
     def __init__(self, filename, mode):
         self.filename = filename
         self.mode = mode
+        if mode != 'r':
+            self.sync = zarr.ProcessSynchronizer("synchronizers/%s.sync"%filename)
+
 
     def __enter__(self):
-        return zarr.open(self.filename, mode=self.mode)
+        if self.mode != 'r':
+            return zarr.open(self.filename, mode=self.mode, synchronizer=self.sync)
+        else:
+            return zarr.open(self.filename, mode=self.mode)
 
     def __exit__(self, *args):
         pass

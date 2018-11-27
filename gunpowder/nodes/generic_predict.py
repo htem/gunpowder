@@ -57,8 +57,7 @@ class GenericPredict(BatchFilter):
             # exit if anything goes wrong
             self.worker = ProducerPool([self.__produce_predict_batch], queue_size=1)
             self.batch_in = multiprocessing.Queue(maxsize=1)
-            self.batch_in_lock = multiprocessing.Lock()
-            self.batch_out_lock = multiprocessing.Lock()
+            self.batch_lock = multiprocessing.Lock()
 
         self.timer_start = None
 
@@ -128,12 +127,8 @@ class GenericPredict(BatchFilter):
 
         if self.spawn_subprocess:
 
-            self.batch_in_lock.acquire()
-            self.batch_in.put((batch, request))
-
-            with self.batch_out_lock:
-
-                self.batch_in_lock.release()
+            with self.batch_lock:
+                self.batch_in.put((batch, request))
                 try:
                     out = self.worker.get()
                 except WorkersDied:
