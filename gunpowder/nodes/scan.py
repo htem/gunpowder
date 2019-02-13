@@ -40,12 +40,13 @@ class Scan(BatchFilter):
             If multiple workers are used, how many batches to hold at most.
     '''
 
-    def __init__(self, reference, num_workers=1, cache_size=50):
+    def __init__(self, reference, num_workers=1, cache_size=50, return_batch=True):
 
         self.reference = reference.copy()
         self.num_workers = num_workers
         self.cache_size = cache_size
         self.workers = None
+        self.return_batch = return_batch
         if num_workers > 1:
             self.request_queue = multiprocessing.Queue(maxsize=0)
         self.batch = None
@@ -92,7 +93,7 @@ class Scan(BatchFilter):
 
                 chunk = self.workers.get()
 
-                if not empty_request:
+                if not empty_request and self.return_batch:
                     self.__add_to_batch(request, chunk)
 
                 logger.info("processed chunk %d/%d", i + 1, num_chunks)
@@ -104,7 +105,7 @@ class Scan(BatchFilter):
                 shifted_reference = self.__shift_request(self.reference, shift)
                 chunk = self.__get_chunk(shifted_reference)
 
-                if not empty_request:
+                if not empty_request and self.return_batch:
                     self.__add_to_batch(request, chunk)
 
                 logger.info("processed chunk %d/%d", i + 1, num_chunks)
